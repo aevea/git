@@ -7,6 +7,6 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/magefile/mage v1.14.0
+	github.com/magefile/mage v1.15.0
 	github.com/stretchr/testify v1.8.1
 )
