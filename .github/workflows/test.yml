@@ -16,7 +16,7 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
       - name: Test
         run: |
           go install github.com/magefile/mage
@@ -30,7 +30,7 @@ jobs:
         with:
           go-version: 1.24.x
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
       - name: Tidy check
         run: |
           go install github.com/magefile/mage
