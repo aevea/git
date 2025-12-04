@@ -16,3 +16,8 @@ echo 'testdata/annotated_git_tags_mix/ directory does not exist at the root; cre
 rm -rf annotated_git_tags_mix
 git clone annotated_git_tags_mix.bundle
 echo 'done'
+
+echo 'testdata/detached_head/ directory does not exist at the root; creating...'
+rm -rf detached_head
+git clone detached_head.bundle
+echo 'done'

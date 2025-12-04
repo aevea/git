@@ -14,7 +14,7 @@ func (g *Git) BranchDiffCommits(branchA string, branchB string) ([]Hash, error) 
 	// The ^branchB syntax excludes all commits reachable from branchB
 	output, err := g.runGitCommand("log", "--format=%H", branchA, "^"+branchB)
 	if err != nil {
-		return nil, fmt.Errorf("Failed comparing branches %v and %v: %v", branchA, branchB, err)
+		return nil, fmt.Errorf("failed comparing branches %v and %v: %v", branchA, branchB, err)
 	}
 
 	var diffCommits []Hash
