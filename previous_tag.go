@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/apex/log"
-	"github.com/go-git/go-git/v5/plumbing"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 
 // PreviousTag sorts tags based on when their commit happened and returns the one previous
 // to the current.
-func (g *Git) PreviousTag(currentHash plumbing.Hash) (*Tag, error) {
+func (g *Git) PreviousTag(currentHash Hash) (*Tag, error) {
 	tags, err := g.getTags()
 
 	if err != nil {
@@ -33,7 +32,7 @@ func (g *Git) PreviousTag(currentHash plumbing.Hash) (*Tag, error) {
 		return tags[0], nil
 	}
 
-	log.Debugf("success: previous tag found at %v", tags[1].Hash)
+	log.Debugf("success: previous tag found at %v", tags[1].Hash.String())
 
 	return tags[1], nil
 }

@@ -1,40 +1,68 @@
 package git
 
 import (
-	"errors"
-
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-)
-
-var (
-	errReachedToCommit = errors.New("reached to commit")
+	"strings"
 )
 
 // CommitsBetween returns a slice of commit hashes between two commits
-func (g *Git) CommitsBetween(from plumbing.Hash, to plumbing.Hash) ([]plumbing.Hash, error) {
-	cIter, _ := g.repo.Log(&git.LogOptions{From: from})
+func (g *Git) CommitsBetween(from Hash, to Hash) ([]Hash, error) {
+	// If from and to are equal, return empty slice
+	if from == to {
+		return []Hash{}, nil
+	}
 
-	var commits []plumbing.Hash
+	fromStr := from.String()
+	toStr := to.String()
 
-	err := cIter.ForEach(func(c *object.Commit) error {
-		// If no previous tag is found then from and to are equal
-		if from == to {
-			return nil
+	// Check if 'to' is an empty hash (all zeros)
+	var emptyHash Hash
+	if to == emptyHash {
+		// If 'to' is empty, return all commits from 'from'
+		output, err := g.runGitCommand("log", "--format=%H", fromStr)
+		if err != nil {
+			return nil, err
 		}
-		if c.Hash == to {
-			return errReachedToCommit
+		lines := strings.Split(output, "\n")
+		var commits []Hash
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+			hash, err := NewHash(line)
+			if err != nil {
+				continue
+			}
+			commits = append(commits, hash)
 		}
-		commits = append(commits, c.Hash)
-		return nil
-	})
-
-	if err == errReachedToCommit {
 		return commits, nil
 	}
+
+	// Get commits from 'from' to 'to' (excluding 'to')
+	// Use ^to to exclude the 'to' commit
+	output, err := g.runGitCommand("log", "--format=%H", fromStr, "^"+toStr)
 	if err != nil {
-		return commits, err
+		// If the command fails, it might be because there are no commits between
+		// Try to check if 'to' is reachable from 'from'
+		_, err2 := g.runGitCommand("merge-base", "--is-ancestor", toStr, fromStr)
+		if err2 != nil {
+			return []Hash{}, nil
+		}
+		return nil, err
 	}
+
+	lines := strings.Split(output, "\n")
+	var commits []Hash
+
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		hash, err := NewHash(line)
+		if err != nil {
+			continue
+		}
+		commits = append(commits, hash)
+	}
+
 	return commits, nil
 }

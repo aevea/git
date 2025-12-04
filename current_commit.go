@@ -2,26 +2,16 @@ package git
 
 import (
 	"github.com/apex/log"
-	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // CurrentCommit returns the commit that HEAD is at
-func (g *Git) CurrentCommit() (*object.Commit, error) {
-	head, err := g.repo.Head()
-
+func (g *Git) CurrentCommit() (*Commit, error) {
+	hashStr, err := g.runGitCommand("rev-parse", "HEAD")
 	if err != nil {
 		return nil, err
 	}
 
-	currentCommitHash := head.Hash()
+	log.Debugf("current commitHash: %v \n", hashStr)
 
-	log.Debugf("current commitHash: %v \n", currentCommitHash)
-
-	commitObject, err := g.repo.CommitObject(currentCommitHash)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return commitObject, nil
+	return g.Commit(MustHash(hashStr))
 }

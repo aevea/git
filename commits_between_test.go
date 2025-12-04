@@ -1,71 +1,69 @@
 package git
 
 import (
+	"os"
 	"testing"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCommitsBetween(t *testing.T) {
-	repo, _ := git.PlainOpen("./testdata/git_tags")
-	testGit := &Git{repo: repo}
+	testGit, err := OpenGit("./testdata/git_tags")
+	assert.NoError(t, err)
 
-	head, err := repo.Head()
+	headHashStr, err := testGit.runGitCommand("rev-parse", "HEAD")
+	assert.NoError(t, err)
+
+	headHash, err := NewHash(headHashStr)
+	assert.NoError(t, err)
+
+	tag, err := testGit.PreviousTag(headHash)
 
 	assert.NoError(t, err)
 
-	tag, err := testGit.PreviousTag(head.Hash())
-
-	assert.NoError(t, err)
-
-	commit, err := repo.CommitObject(tag.Hash)
+	commit, err := testGit.Commit(tag.Hash)
 	assert.NoError(t, err)
 	assert.Equal(t, "chore: first commit on master\n", commit.Message)
 
-	commits, err := testGit.CommitsBetween(head.Hash(), tag.Hash)
+	commits, err := testGit.CommitsBetween(headHash, tag.Hash)
 
 	assert.NoError(t, err)
 	assert.Len(t, commits, 3)
 
-	middleCommit, _ := repo.CommitObject(commits[1])
+	middleCommit, _ := testGit.Commit(commits[1])
 
 	assert.Equal(t, "chore: third commit on master\n", middleCommit.Message)
 }
 
 func TestNoToCommit(t *testing.T) {
-	repo := setupRepo()
-	createTestHistory(repo)
+	tmpDir, testGit := setupRepo(t)
+	defer os.RemoveAll(tmpDir)
 
-	head, _ := repo.Head()
+	lastHash := createTestHistory(t, testGit)
 
-	testGit := &Git{repo: repo}
-
-	commits, err := testGit.CommitsBetween(head.Hash(), plumbing.Hash{})
+	var emptyHash Hash
+	commits, err := testGit.CommitsBetween(lastHash, emptyHash)
 
 	assert.Equal(t, 4, len(commits))
 
-	commit, commitErr := repo.CommitObject(commits[0])
+	commit, commitErr := testGit.Commit(commits[0])
 
 	assert.NoError(t, commitErr)
-	assert.Equal(t, "third commit on new branch", commit.Message)
+	assert.Equal(t, "third commit on new branch\n", commit.Message)
 	assert.Equal(t, err, nil)
 
-	lastCommit, _ := repo.CommitObject(commits[3])
+	lastCommit, _ := testGit.Commit(commits[3])
 
-	assert.Equal(t, "test commit on master", lastCommit.Message)
+	assert.Equal(t, "test commit on master\n", lastCommit.Message)
 }
 
 func TestToFromEqual(t *testing.T) {
-	repo := setupRepo()
-	createTestHistory(repo)
+	tmpDir, testGit := setupRepo(t)
+	defer os.RemoveAll(tmpDir)
 
-	head, _ := repo.Head()
+	lastHash := createTestHistory(t, testGit)
 
-	testGit := &Git{repo: repo}
-
-	commits, err := testGit.CommitsBetween(head.Hash(), head.Hash())
+	commits, err := testGit.CommitsBetween(lastHash, lastHash)
 
 	assert.Equal(t, 0, len(commits))
 	assert.NoError(t, err)

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,10 +30,10 @@ func TestCurrentTagAnnotatedHappy(t *testing.T) {
 }
 
 func TestCurrentTagUnhappy(t *testing.T) {
-	repo := setupRepo()
-	createTestHistory(repo)
+	tmpDir, testGit := setupRepo(t)
+	defer os.RemoveAll(tmpDir)
 
-	testGit := &Git{repo: repo}
+	createTestHistory(t, testGit)
 
 	_, err := testGit.CurrentTag()
 

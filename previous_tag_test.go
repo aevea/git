@@ -3,23 +3,24 @@ package git
 import (
 	"testing"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPreviousTag(t *testing.T) {
-	repo, _ := git.PlainOpen("./testdata/git_tags")
-	testGit := &Git{repo: repo}
+	testGit, err := OpenGit("./testdata/git_tags")
+	assert.NoError(t, err)
 
-	head, err := repo.Head()
+	headHashStr, err := testGit.runGitCommand("rev-parse", "HEAD")
+	assert.NoError(t, err)
+
+	headHash, err := NewHash(headHashStr)
+	assert.NoError(t, err)
+
+	tag, err := testGit.PreviousTag(headHash)
 
 	assert.NoError(t, err)
 
-	tag, err := testGit.PreviousTag(head.Hash())
-
-	assert.NoError(t, err)
-
-	commit, err := repo.CommitObject(tag.Hash)
+	commit, err := testGit.Commit(tag.Hash)
 	assert.NoError(t, err)
 	assert.Equal(t, "chore: first commit on master\n", commit.Message)
 
