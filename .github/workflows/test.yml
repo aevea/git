@@ -10,7 +10,7 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
       - name: Install tools with mise
         run: mise install
       - name: Reshim mise
@@ -27,7 +27,7 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
       - name: Install tools with mise
         run: mise install
       - name: Reshim mise
