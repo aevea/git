@@ -1,19 +1,20 @@
 package git
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCurrentCommit(t *testing.T) {
-	repo := setupRepo()
-	createTestHistory(repo)
+	tmpDir, testGit := setupRepo(t)
+	defer os.RemoveAll(tmpDir)
 
-	testGit := &Git{repo: repo}
+	createTestHistory(t, testGit)
 
 	currentCommit, err := testGit.CurrentCommit()
 
 	assert.NoError(t, err)
-	assert.Equal(t, "third commit on new branch", currentCommit.Message)
+	assert.Equal(t, "third commit on new branch\n", currentCommit.Message)
 }

@@ -1,20 +1,19 @@
 package git
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCommitsOnBranchSimple(t *testing.T) {
-	repo := setupRepo()
-	createTestHistory(repo)
+	tmpDir, testGit := setupRepo(t)
+	defer os.RemoveAll(tmpDir)
 
-	head, _ := repo.Head()
+	lastHash := createTestHistory(t, testGit)
 
-	testGit := &Git{repo: repo}
-
-	commits, err := testGit.CommitsOnBranchSimple(head.Hash())
+	commits, err := testGit.CommitsOnBranchSimple(lastHash)
 
 	assert.Equal(t, 4, len(commits))
 

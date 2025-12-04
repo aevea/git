@@ -1,22 +1,21 @@
 package git
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLatestCommitOnBranch(t *testing.T) {
-	repo := setupRepo()
-	createTestHistory(repo)
+	tmpDir, testGit := setupRepo(t)
+	defer os.RemoveAll(tmpDir)
 
-	head, _ := repo.Head()
+	createTestHistory(t, testGit)
 
-	testGit := &Git{repo: repo}
-
-	commit, err := testGit.LatestCommitOnBranch(head.Name().String())
+	commit, err := testGit.LatestCommitOnBranch("my-branch")
 
 	assert.NoError(t, err)
-	assert.Equal(t, "third commit on new branch", commit.Message)
+	assert.Equal(t, "third commit on new branch\n", commit.Message)
 	assert.Equal(t, err, nil)
 }

@@ -1,39 +1,36 @@
 package git
 
 import (
-	"errors"
-
 	"github.com/apex/log"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"strings"
 )
-
-// ErrCommonCommitFound is used for identifying when the iterator has reached the common commit
-var ErrCommonCommitFound = errors.New("common commit found")
 
 // CommitsOnBranch iterates through all references and returns commit hashes on given branch. \n
 // Important to note is that this will provide all commits from anything the branch is connected to.
 func (g *Git) CommitsOnBranch(
-	branchCommit plumbing.Hash,
-) ([]plumbing.Hash, error) {
-	var branchCommits []plumbing.Hash
+	branchCommit Hash,
+) ([]Hash, error) {
+	hashStr := branchCommit.String()
 
-	branchIter, err := g.repo.Log(&git.LogOptions{
-		From: branchCommit,
-	})
-
+	// Get all commit hashes
+	output, err := g.runGitCommand("log", "--format=%H", hashStr)
 	if err != nil {
 		return nil, err
 	}
 
-	branchIterErr := branchIter.ForEach(func(commit *object.Commit) error {
-		branchCommits = append(branchCommits, commit.Hash)
-		return nil
-	})
+	lines := strings.Split(output, "\n")
+	var branchCommits []Hash
 
-	if branchIterErr != nil {
-		log.Debugf("Stopped getting commits on branch: %v", branchIterErr)
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		hash, err := NewHash(line)
+		if err != nil {
+			log.Debugf("Failed to parse hash %s: %v", line, err)
+			continue
+		}
+		branchCommits = append(branchCommits, hash)
 	}
 
 	return branchCommits, nil

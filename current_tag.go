@@ -13,8 +13,12 @@ var (
 
 // CurrentTag returns a Tag if the current HEAD is on a tag
 func (g *Git) CurrentTag() (*Tag, error) {
-	head, err := g.repo.Head()
+	headHashStr, err := g.runGitCommand("rev-parse", "HEAD")
+	if err != nil {
+		return nil, err
+	}
 
+	headHash, err := NewHash(headHashStr)
 	if err != nil {
 		return nil, err
 	}
@@ -25,12 +29,12 @@ func (g *Git) CurrentTag() (*Tag, error) {
 		return nil, err
 	}
 
-	log.Debugf("head hash: %s", head.Hash())
+	log.Debugf("head hash: %s", headHash.String())
 
 	for _, tag := range tags {
-		log.Debugf("tag: %v, hash: %v", tag.Name, tag.Hash)
+		log.Debugf("tag: %v, hash: %v", tag.Name, tag.Hash.String())
 
-		if tag.Hash == head.Hash() {
+		if tag.Hash == headHash {
 			return tag, nil
 		}
 	}

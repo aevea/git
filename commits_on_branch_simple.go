@@ -1,43 +1,54 @@
 package git
 
 import (
+	"strings"
+
 	"github.com/apex/log"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // SimpleCommit is a slimed down commit object of just Hash and Message
 type SimpleCommit struct {
-	Hash    [20]byte
+	Hash    Hash
 	Message string
 }
 
 // CommitsOnBranchSimple iterates through all references and returns simpleCommits on given branch. \n
 // Important to note is that this will provide all commits from anything the branch is connected to.
 func (g *Git) CommitsOnBranchSimple(
-	branchCommit plumbing.Hash,
+	branchCommit Hash,
 ) ([]SimpleCommit, error) {
-	var branchCommits []SimpleCommit
+	hashStr := branchCommit.String()
 
-	branchIter, err := g.repo.Log(&git.LogOptions{
-		From: branchCommit,
-	})
-
+	// Get all commit hashes first
+	hashOutput, err := g.runGitCommand("log", "--format=%H", hashStr)
 	if err != nil {
 		return nil, err
 	}
 
-	branchIterErr := branchIter.ForEach(func(commit *object.Commit) error {
-		branchCommits = append(branchCommits, SimpleCommit{
-			Hash:    commit.Hash,
-			Message: commit.Message,
-		})
-		return nil
-	})
+	hashLines := strings.Split(hashOutput, "\n")
+	var branchCommits []SimpleCommit
 
-	if branchIterErr != nil {
-		log.Debugf("Stopped getting commits on branch: %v", branchIterErr)
+	for _, hashLine := range hashLines {
+		if hashLine == "" {
+			continue
+		}
+		hash, err := NewHash(hashLine)
+		if err != nil {
+			log.Debugf("Failed to parse hash %s: %v", hashLine, err)
+			continue
+		}
+
+		// Get message for this commit
+		message, err := g.runGitCommand("log", "-1", "--format=%B", hashLine)
+		if err != nil {
+			log.Debugf("Failed to get message for commit %s: %v", hashLine, err)
+			continue
+		}
+
+		branchCommits = append(branchCommits, SimpleCommit{
+			Hash:    hash,
+			Message: strings.TrimSpace(message),
+		})
 	}
 
 	return branchCommits, nil
