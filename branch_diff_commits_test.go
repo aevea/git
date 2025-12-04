@@ -37,3 +37,25 @@ func TestBranchDiffCommitsWithMasterMerge(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 }
+
+func TestBranchDiffCommitsDetachedHead(t *testing.T) {
+	testGit, err := OpenGit("./testdata/detached_head")
+	assert.NoError(t, err)
+
+	// Verify we're in detached HEAD state
+	currentBranch, err := testGit.CurrentBranch()
+	assert.NoError(t, err)
+	assert.Equal(t, "HEAD", currentBranch.Name())
+
+	// BranchDiffCommits should work even in detached HEAD state
+	// Compare origin/master (which is ahead) to HEAD (which is at second commit)
+	commits, err := testGit.BranchDiffCommits("origin/master", "HEAD")
+
+	assert.NoError(t, err)
+	// origin/master has one commit ahead of HEAD (the third commit)
+	assert.Equal(t, 1, len(commits))
+
+	commit, err := testGit.Commit(commits[0])
+	assert.NoError(t, err)
+	assert.Equal(t, "third commit\n", commit.Message)
+}
