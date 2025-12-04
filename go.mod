@@ -1,4 +1,4 @@
-module github.com/aevea/git/v3
+module github.com/aevea/git/v4
 
 go 1.16
 
